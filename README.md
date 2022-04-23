@@ -19,6 +19,7 @@ The structure is shown below.
 ## Software requirements
 * [sqllineage](https://github.com/reata/sqllineage)
 * [treelib](https://github.com/caesar0301/treelib)
+* [networkx](https://networkx.org/)
 
 
 ## Install packages  
@@ -60,3 +61,11 @@ members
 └── persons
 ```
 
+Shows the table from which members are based:
+```
+python graph_visualizer.py -k source -t members
+```
+
+output:  
+
+![Graph](./doc/graph.png "Graph")
