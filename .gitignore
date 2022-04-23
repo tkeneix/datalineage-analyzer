@@ -1,0 +1,13 @@
+/venv/
+/pid/
+/.vscode/
+/.idea/
+/.git/
+__pycache__
+/*.log
+/*.out
+/log
+/logs
+/*.pid
+.*.pid
+/*.pkl
