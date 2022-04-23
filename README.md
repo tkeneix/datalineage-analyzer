@@ -69,3 +69,13 @@ python graph_visualizer.py -k source -t members
 output:  
 
 ![Graph](./doc/graph.png "Graph")
+
+
+Start the server to graph the data lineage:
+```
+python dash_visualizer.py
+```
+
+output:  
+
+![Dash](./doc/dash_ui.png "Dash")
