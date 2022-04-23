@@ -8,7 +8,7 @@ The structure is shown below.
 
 1. The analyzer searches the SQL file.  
 2. Convert vendor-specific processing in the SQL file.  
-   There is a general-purpose conversion mechanism called ReplaceHandeler.  
+   There is a general-purpose conversion mechanism called ReplaceHandler.  
 3. Generates a tree-structured data structure and outputs it to a file (pickle format).
 4. Output the tree structure in text format with visualizer.  
 
