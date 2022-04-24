@@ -146,8 +146,10 @@ app.layout = html.Div([
             },
             stylesheet=stylesheet
         ),
-    ])
+    ]),
+    html.Div([], id='redirect_url')
 ])
+
 
 @app.callback(
     Output('cytoscape', 'elements'),
@@ -168,6 +170,16 @@ def update_output_div(table_name):
         search_node(all_node_dict[table_name], nest_cnt+1, 'source', done_list, cy_nodes, cy_edges)
         
         return cy_edges + cy_nodes
+
+# This is sample code and link.
+@app.callback(
+    Output("redirect_url", "children"),
+    Input("cytoscape", "tapNodeData"),
+)
+def displayTapNodeDataLink(data):
+    if data:
+        url = f"https://eow.alc.co.jp/search?q={data['label'].split(':')[1]}"
+        return html.A(url, href=url, target="_blank")
 
 
 if __name__ == "__main__":
