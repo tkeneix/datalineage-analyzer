@@ -37,7 +37,7 @@ class ReplaceEnvHandler(ReplaceHandler):
         for env_element in env_element_list:
             env_key = env_element[2:-1]
             try:
-                after = env(env_key)
+                after = self.env(env_key)
             except EnvError as eer:
                 after = self.default_after
             content = content.replace(env_element, after)

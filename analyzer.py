@@ -47,6 +47,7 @@ if __name__ == "__main__":
 
     replace_handler_list = []
     rp_skip_handler_create = ReplaceSkipHandler('^CREATE')
+    replace_handler_list.append(rp_skip_handler_create)
 
     all_node_dict = dict()
     sql_path_list = list()
