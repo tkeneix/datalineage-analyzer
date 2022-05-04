@@ -7,9 +7,11 @@ import datetime
 import logging
 import pickle
 import traceback
+import requests
+
 
 ### global parameters
-PICKLE_PATH = "data_lineage.pkl"
+PICKLE_PATH = 'data_lineage.pkl'
 DEFAULT_TREE_LEVEL = 1
 
 ### global variables
@@ -34,8 +36,16 @@ def get_all_node(pickle_path=PICKLE_PATH) -> dict:
     return all_node_dict
 
 
+def check_url(url) -> bool:
+    res = requests.head(url)
+    if res.status_code == 200:
+        return True
+    else:
+        return False
+
+
 def search_node(
-    node, nest_cnt, kind, params, done_list, cy_nodes, cy_edges, skip_keyword="T|X[1-9]"
+    node, nest_cnt, kind, params, done_list, cy_nodes, cy_edges, cy_areas, skip_keyword="T|X[1-9]"
 ):
     if kind == "source":
         for k, v in node.source_dict.items():
@@ -51,6 +61,7 @@ def search_node(
                     "data": {
                         "id": f"{nest_cnt}:{k}",
                         "label": f"{nest_cnt}:{k}",
+                        "name": f"{k}",
                         "classes": "source",
                     }
                 }
@@ -65,11 +76,33 @@ def search_node(
                 cy_nodes.append(node_data)
                 cy_edges.append(edge_data)
 
+                job_name = v.attr_dict.get('job_name')
+                if job_name is not None:
+                    # job_nameが存在する場合はdictから既生成済かを確認して
+                    # 無ければ新たに生成する
+                    area_data = cy_areas.get(job_name)
+                    if area_data is None:
+                        area_data = {
+                            "data": {
+                                "id": f"{job_name}",
+                                "label": f"{job_name}",
+                                "name": f"{job_name}",
+                                "classes": "job",
+                            }
+                        }
+                        cy_areas[job_name] = area_data
+                    # job_nameが存在する場合はnodeにparentの関連を付与する
+                    node_data['data']['parent'] = job_name
+
+                file_url = v.attr_dict.get('file_url')
+                if file_url is not None:
+                    edge_data['data']['file_url'] = file_url
+
             done_list.append(k)
             params["max_source_level"] = max(
                 nest_cnt, params["max_source_level"])
             search_node(v, nest_cnt + 1, kind, params,
-                        done_list, cy_nodes, cy_edges)
+                        done_list, cy_nodes, cy_edges, cy_areas)
 
     elif kind == "target":
         for k, v in node.target_dict.items():
@@ -85,6 +118,7 @@ def search_node(
                     "data": {
                         "id": f"{nest_cnt}:{k}",
                         "label": f"{nest_cnt}:{k}",
+                        "name": f"{k}",
                         "classes": "target",
                     }
                 }
@@ -99,11 +133,33 @@ def search_node(
                 cy_nodes.append(node_data)
                 cy_edges.append(edge_data)
 
+                job_name = v.attr_dict.get('job_name')
+                if job_name is not None:
+                    # job_nameが存在する場合はdictから既生成済かを確認して
+                    # 無ければ新たに生成する
+                    area_data = cy_areas.get(job_name)
+                    if area_data is None:
+                        area_data = {
+                            "data": {
+                                "id": f"{job_name}",
+                                "label": f"{job_name}",
+                                "name": f"{job_name}",
+                                "classes": "job",
+                            }
+                        }
+                        cy_areas[job_name] = area_data
+                    # job_nameが存在する場合はnodeにparentの関連を付与する
+                    node_data['data']['parent'] = job_name
+
+                file_url = v.attr_dict.get('file_url')
+                if file_url is not None:
+                    edge_data['data']['file_url'] = file_url
+
             done_list.append(k)
             params["max_target_level"] = max(
                 nest_cnt, params["max_target_level"])
             search_node(v, nest_cnt + 1, kind, params,
-                        done_list, cy_nodes, cy_edges)
+                        done_list, cy_nodes, cy_edges, cy_areas)
 
 
 # routing section
@@ -143,6 +199,7 @@ class get_tablenodes(Resource):
         nest_cnt = 0
         cy_nodes = []
         cy_edges = []
+        cy_areas = {}
 
         done_list = [table_name]
         node_data = {
@@ -154,6 +211,20 @@ class get_tablenodes(Resource):
             }
         }
         cy_nodes.append(node_data)
+
+        root_node = all_node_dict.get(table_name)
+        job_name = root_node.attr_dict.get('job_name')
+        if job_name is not None:
+            area_node = {
+                "data": {
+                    "id": f"{job_name}",
+                    "label": f"{job_name}",
+                    "name": f"{job_name}",
+                    "classes": "job",
+                }
+            }
+            cy_areas[job_name] = area_node
+            node_data['data']['parent'] = job_name
 
         params = {
             "max_target_level": 0,
@@ -170,6 +241,7 @@ class get_tablenodes(Resource):
             done_list,
             cy_nodes,
             cy_edges,
+            cy_areas
         )
         search_node(
             all_node_dict[table_name],
@@ -179,6 +251,7 @@ class get_tablenodes(Resource):
             done_list,
             cy_nodes,
             cy_edges,
+            cy_areas
         )
 
         if params["target_level"] > params["max_target_level"]:
@@ -186,7 +259,7 @@ class get_tablenodes(Resource):
         if params["source_level"] > params["max_source_level"]:
             params["source_level"] = params["max_source_level"]
 
-        return {"nodes": cy_edges + cy_nodes, "params": params}
+        return {"nodes": cy_edges + cy_nodes + list(cy_areas.values()), "params": params}
 
 
 class get_tables(Resource):

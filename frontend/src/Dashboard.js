@@ -36,8 +36,9 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import SearchIcon from '@mui/icons-material/Search';
 import CytoscapeComponent from "react-cytoscapejs";
 import ConstructionIcon from '@mui/icons-material/Construction';
-import fcose from 'cytoscape-fcose';
 import cytoscape from 'cytoscape';
+import fcose from 'cytoscape-fcose';
+import dagre from 'cytoscape-dagre';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 
@@ -142,6 +143,7 @@ const StyledAutocomplete = styled(Autocomplete)((props) => ({
 
 // cytoscapeの設定
 cytoscape.use(fcose);
+cytoscape.use(dagre);
 
 // ダッシュボード全体のコンテンツ
 const DashboardContent = (props) => {
@@ -231,6 +233,12 @@ const DashboardContent = (props) => {
     var layout = {
       name: event.target.value,
     };
+    if (event.target.value === 'dagre') {
+      layout = {
+        name: 'dagre',
+        rankDir: 'BT'
+      }
+    }
     _cy.layout(layout).run();
   };
 
@@ -267,6 +275,11 @@ const DashboardContent = (props) => {
     getTableNodes(searchText, targetLevel, source_level);
   };
 
+  // Go To Document
+  const edgeBaseUrl = 'https://github.com/tkeneix/datalineage-analyzer/blob/main/sample/';
+  const nodeBaseUrl = 'https://github.com/tkeneix/datalineage-analyzer/blob/main/sampledoc/';
+  const [gotoDocument, setGotoDocument] = React.useState('');
+
   // 初期化ロード処理
   React.useEffect(() => {
     setLayoutNameValue(_default_layout_name);
@@ -283,6 +296,22 @@ const DashboardContent = (props) => {
 
     setSourceMaxLevelMarks(defaultMarks[defaultMarks.length - 1].value);
     setSourceMinLevelMarks(defaultMarks[0].value);
+
+    _cy.bind('click', 'edge', function (event) {
+      var edgeData = event.target.data();
+      //console.log(`click, edge=${JSON.stringify(edgeData, null, 2)}`);
+      if (edgeData.hasOwnProperty('file_url')) {
+        setGotoDocument(`${edgeBaseUrl}${edgeData.file_url}`);
+      }
+    });
+
+    _cy.bind('click', 'node', function (event) {
+      var nodeData = event.target.data();
+      //console.log(`click, node=${JSON.stringify(nodeData, null, 2)}`);
+      if (nodeData.hasOwnProperty('name')) {
+        setGotoDocument(`${nodeBaseUrl}${nodeData.name}.html`);
+      }
+    });
   }, []);
 
   return (
@@ -403,6 +432,7 @@ const DashboardContent = (props) => {
                   onChange={handleGraphLayoutChange}
                 >
                   <MenuItem value="fcose" selected={true}>fcose</MenuItem>
+                  <MenuItem value="dagre">dagre</MenuItem>
                   <MenuItem value="grid">grid</MenuItem>
                   <MenuItem value="random">random</MenuItem>
                   <MenuItem value="circle">circle</MenuItem>
@@ -416,7 +446,7 @@ const DashboardContent = (props) => {
               <ListItemIcon>
                 <LinkIcon />
               </ListItemIcon>
-              <ListItemButton>
+              <ListItemButton component="a" target="_blank" href={gotoDocument}>
                 <ListItemText primary="Go to Document" />
               </ListItemButton>
             </ListItem>
