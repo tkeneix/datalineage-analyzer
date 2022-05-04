@@ -8,6 +8,7 @@ npm install @mui/icons-material
 npm install react-cytoscapejs
 npm install cytoscape@3.8.1
 npm install cytoscape-fcose
+npm install cytoscape-dagre
 
 sudo echo fs.inotify.max_user_watches=582222 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 

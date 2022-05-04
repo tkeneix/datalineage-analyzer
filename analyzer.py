@@ -29,7 +29,9 @@ def parse_argument():
     parser.add_argument("--input_dir", "-i", required=True)
     parser.add_argument("--env_path", "-e", default=".env")
     parser.add_argument("--pickle_path", "-p", default="data_lineage.pkl")
+    parser.add_argument("--detailed_analysis", "-d", action='store_true')
     return parser.parse_args()
+
 
 def create_env(env_path):
     if env_path is None:
@@ -37,6 +39,7 @@ def create_env(env_path):
     env = Env()
     env.read_env(env_path, recurse=False)
     return env
+
 
 if __name__ == "__main__":
     logger = get_module_logger(APP_NAME, store_file=True)
@@ -57,6 +60,11 @@ if __name__ == "__main__":
         sql_content = None
         try:
             sql_path_elements = os.path.dirname(sql_path).split('/')
+            attr_dict = {}
+            if args.detailed_analysis:
+                job_name = sql_path_elements[-1]
+                file_url = sql_path.replace(args.input_dir, '')
+                attr_dict = {'job_name': job_name, 'file_url': file_url}
             logger.info(f"analyzing ...  {sql_path}")
             with open(sql_path, 'r') as input_file:
                 sql_content = input_file.read()
@@ -71,12 +79,14 @@ if __name__ == "__main__":
                 lineage_result._stmt = [
                     s
                     for s in sqlparse.parse(
-                        sqlparse.format(lineage_result._sql.strip(), lineage_result._encoding, strip_comments=True),
+                        sqlparse.format(lineage_result._sql.strip(
+                        ), lineage_result._encoding, strip_comments=True),
                         lineage_result._encoding,
                     )
                     if s.token_first(skip_cm=True)
                 ]
-                lineage_result._stmt_holders = [LineageAnalyzer().analyze(stmt) for stmt in lineage_result._stmt]
+                lineage_result._stmt_holders = [LineageAnalyzer().analyze(
+                    stmt) for stmt in lineage_result._stmt]
                 for holder in lineage_result._stmt_holders:
                     source_tables = holder.read
                     target_tables = holder.write
@@ -88,7 +98,8 @@ if __name__ == "__main__":
                         target_node = all_node_dict.get(target_table_name)
                         if target_node is None:
                             # 初めて登場したテーブルの場合はTableNodeを生成する
-                            target_node = TableNode(target_db_name, target_table_name)
+                            target_node = TableNode(
+                                target_db_name, target_table_name, attr_dict)
                             all_node_dict[target_node.name] = target_node
                         for source_table in source_tables:
                             source_elements = str(source_table).split('.')
@@ -96,10 +107,12 @@ if __name__ == "__main__":
                             source_table_name = source_elements[1]
                             if target_node.exist_source(source_table_name) is False:
                                 # sourceが配下に見つからなかった場合
-                                source_node = all_node_dict.get(source_table_name)
+                                source_node = all_node_dict.get(
+                                    source_table_name)
                                 if source_node is None:
                                     # 全てのTableNodeのリストにも存在しない場合
-                                    source_node = TableNode(source_db_name, source_table_name)
+                                    source_node = TableNode(
+                                        source_db_name, source_table_name, attr_dict)
                                     all_node_dict[source_table_name] = source_node
                                 target_node.add_source(source_node)
 
@@ -111,7 +124,8 @@ if __name__ == "__main__":
                         source_node = all_node_dict.get(source_table_name)
                         if target_node is None:
                             # 初めて登場したテーブルの場合はTableNodeを生成する
-                            source_node = TableNode(source_db_name, source_table_name)
+                            source_node = TableNode(
+                                source_db_name, source_table_name, attr_dict)
                             all_node_dict[source_node.name] = source_node
                         for target_table in target_tables:
                             target_elements = str(target_table).split('.')
@@ -119,10 +133,12 @@ if __name__ == "__main__":
                             target_table_name = target_elements[1]
                             if source_node.exist_target(target_table_name) is False:
                                 # targetが配下に見つからなかった場合
-                                target_node = all_node_dict.get(target_table_name)
+                                target_node = all_node_dict.get(
+                                    target_table_name)
                                 if target_node is None:
                                     # 全てのTableNodeのリストにも存在しない場合
-                                    target_node = TableNode(target_db_name, target_table_name)
+                                    target_node = TableNode(
+                                        target_db_name, target_table_name, attr_dict)
                                     all_node_dict[target_table_name] = target_node
                                 source_node.add_target(target_node)
         except Exception as ex:
@@ -134,5 +150,5 @@ if __name__ == "__main__":
 
     with open(args.pickle_path, 'wb') as analyzed_file:
         pickle.dump(obj=all_node_dict, file=analyzed_file, protocol=3)
-    
+
     logger.info("finished.")
