@@ -79,3 +79,15 @@ python dash_visualizer.py
 output:  
 
 ![Dash](./doc/dash_ui.png "Dash")
+
+
+Start the flask-server to graph the data lineage:
+```
+cd frontend
+npm run build
+python flask_server.py
+```
+
+output:  
+
+![Flask](./doc/flask_ui.png "Flask")
