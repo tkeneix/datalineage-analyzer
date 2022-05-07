@@ -1,3 +1,10 @@
+# How to build this project
+
+```
+cd frontend
+npm install
+```
+
 # How to create this project
 
 ```
