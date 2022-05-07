@@ -232,11 +232,13 @@ const DashboardContent = (props) => {
     setLayoutNameValue(event.target.value);
     var layout = {
       name: event.target.value,
+      padding: 50
     };
     if (event.target.value === 'dagre') {
       layout = {
         name: 'dagre',
-        rankDir: 'BT'
+        rankDir: 'BT',
+        padding: 50
       }
     }
     _cy.layout(layout).run();
@@ -492,7 +494,10 @@ const DashboardContent = (props) => {
                     opacity: 0.9,
                     label: "data(label)",
                     color: "#333333",
-                    shape: 'rectangle'
+                    shape: 'round-rectangle',
+                    width: 'label',
+                    height: 'label',
+                    padding: '6px'
                   }
                 },
                 {
@@ -517,26 +522,39 @@ const DashboardContent = (props) => {
                   selector: 'node[classes="source"]',
                   style: {
                     'background-color': '#191970',
-                    'line-color': '#808080'
+                    'line-color': '#808080',
+                    label: 'data(label)',
+                    'color': 'white',
+                    'text-halign': 'center',
+                    'text-valign': 'center'
                   }
                 },
                 {
                   selector: 'node[classes="target"]',
                   style: {
                     'background-color': '#87ceeb',
-                    'line-color': '#808080'
+                    'line-color': '#808080',
+                    label: 'data(label)',
+                    'color': 'black',
+                    'text-halign': 'center',
+                    'text-valign': 'center'
                   }
                 },
                 {
                   'selector': 'node[classes="root"]',
                   'style': {
                     'background-color': '#4169e1',
-                    'line-color': '#808080'
+                    'line-color': '#808080',
+                    label: 'data(label)',
+                    'color': 'black',
+                    'text-halign': 'center',
+                    'text-valign': 'center'
                   }
                 }
               ]}
               layout={{
                 name: 'fcose',
+                padding: 50
               }}
               minZoom={0.05}
             />
